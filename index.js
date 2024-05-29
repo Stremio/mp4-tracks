@@ -8,7 +8,7 @@ const url = 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235
 async function init() {
   const mp4boxFile = MP4Box.createFile()
 
-  var stopped = false
+  let stopped = false
 
   mp4boxFile.onError = function(err) {
     stopped = true
@@ -25,7 +25,7 @@ async function init() {
   let start = 0
   let end = chunkSize
 
-  var fileMedia = await urlToFileMedia(url)
+  const fileMedia = await urlToFileMedia(url)
 
   async function Mp4FindMoov() {
     let headerOffset = 0
@@ -55,7 +55,7 @@ async function init() {
     }
   }
 
-  var moov = await Mp4FindMoov(fileMedia)
+  const moov = await Mp4FindMoov(fileMedia)
 
   if (!moov.error) {
     end = moov.offset + moov.size
