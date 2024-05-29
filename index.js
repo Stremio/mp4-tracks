@@ -32,14 +32,13 @@ async function init(opts = {}) {
 
   const fileMedia = await urlToFileMedia(url)
 
-  async function findMoov() {
-    let hOffset = 0
+  async function findMoov(startFrom) {
+    let hOffset = startFrom || 0
     for (let k = 0; k < 5; k++) {
       if (stopped)
         return { error: true }
 
-      if (hOffset + chunkSize > fileMedia.length)
-        return { error: true }
+      let hEnd = Math.min(hOffset + chunkSize, fileMedia.length)
 
       const fileStream = await fileMedia.createReadStream({ start: hOffset, end: hOffset + chunkSize })
       const buffer = await streamToBuffer(fileStream)
@@ -47,15 +46,18 @@ async function init(opts = {}) {
 
       start = offset = mp4boxFile.appendBuffer(arrayBuffer)
 
+      if (hEnd === fileMedia.length)
+        return { error: true }
+
       let result =  buffer.indexOf('moov')
       if (result > 0) {
         return {
           offset: hOffset + result - 4,
           size: buffer.readUInt32BE(result - 4),
         }
-      } else if (start > 5 * chunkSize) {
+      } else if (!startFrom && start > 5 * chunkSize) {
         // moov is at end of file
-        return { error: true }
+        return findMoov(start)
       }
 
       hOffset += chunkSize
@@ -63,7 +65,7 @@ async function init(opts = {}) {
     return { error: true }
   }
 
-  const moov = await findMoov(fileMedia)
+  const moov = await findMoov()
 
   end = !moov.error ? moov.offset + moov.size : start + chunkSize
 
@@ -75,17 +77,19 @@ async function init(opts = {}) {
     const arrayBuffer = toArrayBuffer(buffer, offset)
 
     start = offset = mp4boxFile.appendBuffer(arrayBuffer)
-    end = offset + chunkSize
 
-//    if (end > fileMedia.length) {
-//      console.error(Error('Reached end of file'))
-//      return
-//    }
+    if (end !== fileMedia.length) {
+      end = Math.min(offset + chunkSize, fileMedia.length)
+    } else {
+      console.log('Reached end of file')
+      return
+    }
 
     loopStream()
   }
 
-  loopStream()
+  if (start < fileMedia.length)
+    loopStream()
 }
 
 if (require.main === module) {
