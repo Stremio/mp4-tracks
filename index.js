@@ -68,9 +68,9 @@ async function init() {
 
     const stream = await fileMedia.createReadStream({ start, end })
 
-    const chunk = await streamToBuffer(stream)
+    const buffer = await streamToBuffer(stream)
 
-    const arrayBuffer = toArrayBuffer(chunk, offset)
+    const arrayBuffer = toArrayBuffer(buffer, offset)
 
     start = offset = mp4boxFile.appendBuffer(arrayBuffer)
 
