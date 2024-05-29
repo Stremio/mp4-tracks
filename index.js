@@ -47,8 +47,6 @@ async function init() {
           offset: headerOffset + result - 4,
           size: buffer.readUInt32BE(result-4),
         }
-      } else {
-        return { error: true }
       }
 
       headerOffset += headerChunkSize
