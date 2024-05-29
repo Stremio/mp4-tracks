@@ -55,11 +55,7 @@ async function init() {
 
   const moov = await Mp4FindMoov(fileMedia)
 
-  if (!moov.error) {
-    end = moov.offset + moov.size
-  } else {
-    end = start + chunkSize
-  }
+  end = !moov.error ? moov.offset + moov.size : start + chunkSize
 
   async function loopStream() {
     if (stopped) return;
