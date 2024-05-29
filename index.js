@@ -5,12 +5,14 @@ const toArrayBuffer = require('./toArrayBuffer')
 
 const defaults = {
   url: 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4',
-  chunkSize: 1 * 1024 * 1024
+  chunkSize: 1 * 1024 * 1024,
+  bytesLimit: 20 * 1024 * 1024,
 }
 
 async function init(opts = {}) {
   const url = opts.url || defaults.url
   const chunkSize = opts.chunkSize || defaults.chunkSize
+  let bytesLimit = opts.bytesLimit || defaults.bytesLimit
 
   const mp4boxFile = MP4Box.createFile()
 
@@ -40,7 +42,10 @@ async function init(opts = {}) {
 
       let hEnd = Math.min(hOffset + chunkSize, fileMedia.length)
 
-      const fileStream = await fileMedia.createReadStream({ start: hOffset, end: hOffset + chunkSize })
+      if (hEnd > bytesLimit)
+        return { error: true }
+
+      const fileStream = await fileMedia.createReadStream({ start: hOffset, end: hEnd })
       const buffer = await streamToBuffer(fileStream)
       const arrayBuffer = toArrayBuffer(buffer, offset)
 
@@ -57,6 +62,7 @@ async function init(opts = {}) {
         }
       } else if (!startFrom && start > 5 * chunkSize) {
         // moov is at end of file
+        bytesLimit = start + bytesLimit - hEnd
         return findMoov(start)
       }
 
@@ -71,6 +77,11 @@ async function init(opts = {}) {
 
   async function loopStream() {
     if (stopped) return
+
+    if (end > bytesLimit) {
+      console.log('Reached bytes limit')
+      return
+    }
 
     const stream = await fileMedia.createReadStream({ start, end })
     const buffer = await streamToBuffer(stream)
