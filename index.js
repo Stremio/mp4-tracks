@@ -3,9 +3,15 @@ const streamToBuffer = require('./streamToBuffer')
 const urlToFileMedia = require('./urlToFileMedia')
 const toArrayBuffer = require('./toArrayBuffer')
 
-const url = 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4'
+const defaults = {
+  url: 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4',
+  chunkSize: 256 * 1024,
+}
 
-async function init() {
+async function init(opts = {}) {
+  const url = opts.url || defaults.url
+  const chunkSize = opts.chunkSize || defaults.chunkSize
+
   const mp4boxFile = MP4Box.createFile()
 
   let stopped = false
@@ -20,7 +26,6 @@ async function init() {
     console.log('onready', videoData)
   }
 
-  let chunkSize = 256 * 1024
   let offset = 0
   let start = 0
   let end = chunkSize
@@ -28,18 +33,16 @@ async function init() {
   const fileMedia = await urlToFileMedia(url)
 
   async function findMoov() {
-    let headerOffset = 0
-    const headerChunkSize = 1024 * 1024
-    for (let k = 0; k < headerChunkSize * 5; k++) {
-      if (stopped) {
+    let hOffset = 0
+    for (let k = 0; k < chunkSize * 5; k++) {
+      if (stopped)
         return { error: true }
-      }
-      if (headerOffset + headerChunkSize > fileMedia.length) {
-        return { error: true }
-      }
-      const fileStream = await fileMedia.createReadStream({ start: headerOffset, end: headerOffset + headerChunkSize })
-      const buffer = await streamToBuffer(fileStream)
 
+      if (hOffset + chunkSize > fileMedia.length)
+        return { error: true }
+
+      const fileStream = await fileMedia.createReadStream({ start: hOffset, end: hOffset + chunkSize })
+      const buffer = await streamToBuffer(fileStream)
       const arrayBuffer = toArrayBuffer(buffer, offset)
 
       start = offset = mp4boxFile.appendBuffer(arrayBuffer)
@@ -47,12 +50,12 @@ async function init() {
       let result =  buffer.indexOf('moov')
       if (result > 0) {
         return {
-          offset: headerOffset + result - 4,
+          offset: hOffset + result - 4,
           size: buffer.readUInt32BE(result - 4),
         }
       }
 
-      headerOffset += headerChunkSize
+      hOffset += chunkSize
     }
     return { error: true }
   }
@@ -65,13 +68,10 @@ async function init() {
     if (stopped) return
 
     const stream = await fileMedia.createReadStream({ start, end })
-
     const buffer = await streamToBuffer(stream)
-
     const arrayBuffer = toArrayBuffer(buffer, offset)
 
     start = offset = mp4boxFile.appendBuffer(arrayBuffer)
-
     end = offset + chunkSize
 
     if (end > fileMedia.length) {
@@ -85,4 +85,8 @@ async function init() {
   loopStream()
 }
 
-init()
+if (require.main === module) {
+  init()
+} else {
+  module.exports = init
+}
