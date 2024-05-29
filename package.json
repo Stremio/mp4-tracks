@@ -1,0 +1,13 @@
+{
+    "name": "mp4-tracks",
+    "version": "0.1.0",
+    "description": ".",
+    "main": "index.js",
+    "dependencies": {
+        "request": "^2.88.0",
+        "mp4box": "0.5.2"
+    },
+    "scripts": {
+        "start": "node index.js"
+    }
+}
