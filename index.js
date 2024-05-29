@@ -34,6 +34,9 @@ async function init() {
       if (stopped) {
         return { error: true }
       }
+      if (headerOffset + headerChunkSize > fileMedia.length) {
+        return { error: true }
+      }
       const fileStream = await fileMedia.createReadStream({ start: headerOffset, end: headerOffset + headerChunkSize })
       const buffer = await streamToBuffer(fileStream)
 
@@ -70,6 +73,11 @@ async function init() {
     start = offset = mp4boxFile.appendBuffer(arrayBuffer)
 
     end = offset + chunkSize
+
+    if (end > fileMedia.length) {
+      console.error(Error('Reached end of file'))
+      return
+    }
 
     loopStream()
   }
