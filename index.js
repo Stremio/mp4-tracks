@@ -27,7 +27,7 @@ async function init() {
 
   const fileMedia = await urlToFileMedia(url)
 
-  async function Mp4FindMoov() {
+  async function findMoov() {
     let headerOffset = 0
     const headerChunkSize = 1024 * 1024
     for (let k = 0; k < headerChunkSize * 5; k++) {
@@ -51,9 +51,10 @@ async function init() {
 
       headerOffset += headerChunkSize
     }
+    return { error: true }
   }
 
-  const moov = await Mp4FindMoov(fileMedia)
+  const moov = await findMoov(fileMedia)
 
   end = !moov.error ? moov.offset + moov.size : start + chunkSize
 
