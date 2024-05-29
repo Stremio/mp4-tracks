@@ -1,4 +1,4 @@
-const MP4Box = require('mp4box');
+const MP4Box = require('mp4box')
 const streamToBuffer = require('./streamToBuffer')
 const urlToFileMedia = require('./urlToFileMedia')
 const toArrayBuffer = require('./toArrayBuffer')
@@ -18,7 +18,7 @@ async function init() {
   mp4boxFile.onReady = function(videoData) {
     stopped = true
     console.log('onready', videoData)
-  };
+  }
 
   let chunkSize = 256 * 1024
   let offset = 0
@@ -45,7 +45,7 @@ async function init() {
       if (result > 0) {
         return {
           offset: headerOffset + result - 4,
-          size: buffer.readUInt32BE(result-4),
+          size: buffer.readUInt32BE(result - 4),
         }
       }
 
@@ -58,7 +58,7 @@ async function init() {
   end = !moov.error ? moov.offset + moov.size : start + chunkSize
 
   async function loopStream() {
-    if (stopped) return;
+    if (stopped) return
 
     const stream = await fileMedia.createReadStream({ start, end })
 
