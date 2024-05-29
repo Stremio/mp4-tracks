@@ -5,7 +5,7 @@ const toArrayBuffer = require('./toArrayBuffer')
 
 const defaults = {
   url: 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4',
-  chunkSize: 256 * 1024,
+  chunkSize: 1 * 1024 * 1024
 }
 
 async function init(opts = {}) {
@@ -34,7 +34,7 @@ async function init(opts = {}) {
 
   async function findMoov() {
     let hOffset = 0
-    for (let k = 0; k < chunkSize * 5; k++) {
+    for (let k = 0; k < 5; k++) {
       if (stopped)
         return { error: true }
 
@@ -53,6 +53,9 @@ async function init(opts = {}) {
           offset: hOffset + result - 4,
           size: buffer.readUInt32BE(result - 4),
         }
+      } else if (start > 5 * chunkSize) {
+        // moov is at end of file
+        return { error: true }
       }
 
       hOffset += chunkSize
@@ -74,10 +77,10 @@ async function init(opts = {}) {
     start = offset = mp4boxFile.appendBuffer(arrayBuffer)
     end = offset + chunkSize
 
-    if (end > fileMedia.length) {
-      console.error(Error('Reached end of file'))
-      return
-    }
+//    if (end > fileMedia.length) {
+//      console.error(Error('Reached end of file'))
+//      return
+//    }
 
     loopStream()
   }
