@@ -3,6 +3,8 @@ const streamToBuffer = require('./streamToBuffer')
 const urlToFileMedia = require('./urlToFileMedia')
 const toArrayBuffer = require('./toArrayBuffer')
 
+const debug = process.env.DEBUG || require.main === module
+
 const defaults = {
   url: 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4',
   chunkSize: 1 * 1024 * 1024,
@@ -21,13 +23,13 @@ function mp4tracks(opts = {}) {
 
     mp4boxFile.onError = function(err) {
       stopped = true
-      console.error(err)
+      if (debug) console.error(err)
       reject(err)
     }
 
     mp4boxFile.onReady = function(videoData) {
       stopped = true
-      console.log('onready', videoData)
+      if (debug) console.log('onReady', videoData)
       resolve(videoData)
     }
 
@@ -35,7 +37,7 @@ function mp4tracks(opts = {}) {
     let start = 0
     let end = chunkSize
 
-    const fileMedia = await urlToFileMedia(url)
+    const fileMedia = await urlToFileMedia(url, debug)
 
     async function findMoov(startFrom) {
       let hOffset = startFrom || 0
@@ -83,13 +85,13 @@ function mp4tracks(opts = {}) {
 
       if (end > bytesLimit) {
         reject(Error('Reached bytes limit'))
-        console.log('Reached bytes limit')
+        if (debug) console.log('Reached bytes limit')
         return
       }
 
       if (start >= fileMedia.length) {
         reject(Error('Passed end of file'))
-        console.log('Passed end of file')
+        if (debug) console.log('Passed end of file')
         return
       }
 

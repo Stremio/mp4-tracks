@@ -3,7 +3,7 @@ var getContentLength = require('./getContentLength')
 
 var totalData = 0
 
-var urlToFileMedia = function(url) {
+var urlToFileMedia = function(url, debug) {
 	return new Promise(function(resolve, reject) {
 		getContentLength(url).then(function(contentLength) {
 			var file = {
@@ -11,9 +11,9 @@ var urlToFileMedia = function(url) {
 				createReadStream: function(range) {
 					var opts = { url, followRedirect: true, maxRedirects: 5, strictSSL: false }
 					if (Object.values(range).length) {
-						console.log(range)
+						if (debug) console.log(range)
 						totalData += range.end - range.start
-						console.log('total data', totalData)
+						if (debug) console.log('total data', totalData)
 						range.start = range.start || 0
 						range.end = range.end || 0
 						if (range.end > contentLength -1 || range.end === 0)
