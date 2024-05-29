@@ -7,6 +7,7 @@ const debug = process.env.DEBUG || require.main === module
 
 const defaults = {
   url: 'https://berlin-ak.ftp.media.ccc.de/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4',
+  hChunkSize: 256 * 1024,
   chunkSize: 1 * 1024 * 1024,
   bytesLimit: 20 * 1024 * 1024,
 }
@@ -15,6 +16,7 @@ function mp4tracks(opts = {}) {
   return new Promise(async function(resolve, reject) {
     const url = opts.url || defaults.url
     const chunkSize = opts.chunkSize || defaults.chunkSize
+    const hChunkSize = opts.hChunkSize || defaults.hChunkSize
     let bytesLimit = opts.bytesLimit || defaults.bytesLimit
 
     const mp4boxFile = MP4Box.createFile()
@@ -45,7 +47,7 @@ function mp4tracks(opts = {}) {
         if (stopped)
           return { error: true }
 
-        let hEnd = Math.min(hOffset + chunkSize, fileMedia.length)
+        let hEnd = Math.min(hOffset + hChunkSize, fileMedia.length)
 
         if (hEnd > bytesLimit)
           return { error: true }
@@ -65,13 +67,13 @@ function mp4tracks(opts = {}) {
             offset: hOffset + result - 4,
             size: buffer.readUInt32BE(result - 4),
           }
-        } else if (!startFrom && start > 5 * chunkSize) {
+        } else if (!startFrom && start > 5 * hChunkSize) {
           // moov is at end of file
           bytesLimit = start + bytesLimit - hEnd
           return findMoov(start)
         }
 
-        hOffset += chunkSize
+        hOffset += hChunkSize
       }
       return { error: true }
     }
