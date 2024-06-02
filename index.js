@@ -47,7 +47,7 @@ function mp4tracks(opts = {}) {
     let start = 0
     let end = chunkSize
 
-    const fileMedia = await urlToFileMedia(url, debug)
+    const fileMedia = await urlToFileMedia(url, opts.contentLength, debug)
 
     async function findMoov(startFrom) {
       let hOffset = startFrom || 0

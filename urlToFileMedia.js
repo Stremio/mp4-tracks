@@ -3,9 +3,9 @@ var getContentLength = require('./getContentLength')
 
 var totalData = 0
 
-var urlToFileMedia = function(url, debug) {
+var urlToFileMedia = function(url, contentLength, debug) {
 	return new Promise(function(resolve, reject) {
-		getContentLength(url).then(function(contentLength) {
+		getContentLength(url, contentLength).then(function(contentLength) {
 			var file = {
 				length: parseInt(contentLength),
 				createReadStream: function(range) {
