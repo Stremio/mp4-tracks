@@ -32,7 +32,15 @@ function mp4tracks(opts = {}) {
     mp4boxFile.onReady = function(videoData) {
       stopped = true
       if (debug) console.log('onReady', videoData)
-      resolve(videoData)
+      const tracks = ((videoData || {}).tracks || []).map(function(track) {
+        return {
+          id: track.id,
+          type: track.type === 'metadata' && track.codec === 'text' ? 'text' : track.type,
+          codec: track.codec,
+          lang: track.language === 'und' || track.language === '```' ? null : track.language,
+        }
+      })
+      resolve(tracks)
     }
 
     let offset = 0
@@ -61,7 +69,7 @@ function mp4tracks(opts = {}) {
         if (hEnd === fileMedia.length)
           return { error: true }
 
-        let result =  buffer.indexOf('moov')
+        let result = buffer.indexOf('moov')
         if (result > 0) {
           return {
             offset: hOffset + result - 4,
